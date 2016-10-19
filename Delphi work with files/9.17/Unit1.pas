@@ -1,0 +1,179 @@
+unit Unit1;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, ExtCtrls, Grids;
+
+type
+  TForm1 = class(TForm)
+    StringGrid1: TStringGrid;
+    LabeledEdit1: TLabeledEdit;
+    Button1: TButton;
+    Button2: TButton;
+    Button3: TButton;
+    procedure FormCreate(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+// структура
+type
+	TSchoolboy = record
+    // имя
+		FirstName : string;
+    // фамилия
+		LastName : string;
+    // год
+		YearOfStudy : string;
+    // буква класса
+		ClassLetter : string;
+    // средний бал
+		Assessment : real;
+end;
+
+var
+  // динамический массив структур
+  schoolboys : array of TSchoolboy;
+  // количество записей
+  count : integer;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  // при создание формы устанавливаем имена
+  // фиксированных колонок таблицы
+  StringGrid1.ColCount:=7;
+  StringGrid1.Cells[0,0] := 'Имя';
+  StringGrid1.Cells[1,0] := 'Фамилия';
+  StringGrid1.Cells[2,0] := 'Год обучения';
+  StringGrid1.Cells[3,0] := 'Буква класса';
+  StringGrid1.Cells[4,0] := 'Средний бал';
+  StringGrid1.Cells[5,0] := 'ср. бал >4';
+  StringGrid1.Cells[6,0] := 'ср. бал >4.5';
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+var
+  // текстовый файл
+  f: TextFile;
+  // итератор
+  i: integer;
+begin
+  // открытие файла на чтение
+  AssignFile(f, './input.txt');
+  Reset(f);
+  // обнуляем количество записей в файле
+  count := 0;
+  // читаем файл до конца
+  while not Eof(f) do
+  begin
+    // увеличиваем счетчик количества записей
+    Inc(count);
+    // устанавливаем новый размер структур
+    SetLength(schoolboys, count + 1);
+    // считываем построчно имя фамилию и т.д.
+    ReadLn(f, schoolboys[count].FirstName);
+    ReadLn(f, schoolboys[count].LastName);
+    ReadLn(f, schoolboys[count].YearOfStudy);
+    ReadLn(f, schoolboys[count].ClassLetter);
+    ReadLn(f, schoolboys[count].Assessment);
+  end;
+  // после окончания считывния закрываем файл
+  CloseFile(f);
+// --------------------
+  // выводим содержимое на форму
+
+  // количество строк в таблице
+  StringGrid1.RowCount := count+1;
+
+  // заполняем таблицу данными со структуры
+  for i := 1 to count do
+  begin
+    StringGrid1.Cells[0,i] := schoolboys[i].FirstName;
+    StringGrid1.Cells[1,i] := schoolboys[i].LastName;
+    StringGrid1.Cells[2,i] := schoolboys[i].YearOfStudy;
+    StringGrid1.Cells[3,i] := schoolboys[i].ClassLetter;
+    StringGrid1.Cells[4,i] := FormatFloat('0.00', schoolboys[i].Assessment);
+  end;
+
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  // при разрушении формы высвобождаем память
+  // выделенную под массив структур
+  schoolboys := nil;
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);
+var
+  // итератор и счетчик кол-во отличников
+  i, c : Integer;
+begin
+  // обнуляем счетчик
+  c := 0;
+  // проходим циклом по всем структурам
+  for i := 1 to count do
+  begin
+    // если средний бал текущего учениека
+    // выше нежели 4
+    if schoolboys[i].Assessment >= 4.0 then
+    begin
+      // то увеличиваем кол-во отличников
+      // на еденицу
+      Inc(c);
+      StringGrid1.Cells[5,i] := '#####';
+    if schoolboys[i].Assessment >= 4.5 then
+      StringGrid1.Cells[6,i] := '#####';
+    end;
+  end;
+  // выводим кол-во отличников в ячейку на форме
+  LabeledEdit1.Text := IntToStr(c);
+end;
+
+procedure TForm1.Button2Click(Sender: TObject);
+var
+  // текстовый файл
+  f: TextFile;
+  // итератор
+  i : Integer;
+begin
+  // открываем файл на запись
+  AssignFile(f, './output.txt');
+  Rewrite(f);
+  // проходим циклом по всем структурам
+  for i := 1 to count do
+  begin
+    // если средниц бал выше 4,5
+    // то сохраним этого учениека в файл g
+    if schoolboys[i].Assessment >= 4.5 then
+    begin
+      // записываем все в одну строку через пробел
+      Write(f, schoolboys[i].FirstName, ' ');
+      Write(f, schoolboys[i].LastName, ' ');
+      Write(f, schoolboys[i].YearOfStudy, ' ');
+      Write(f, schoolboys[i].ClassLetter, ' ');
+      // в конце записываем оценку и переходим на новую строку файла
+      WriteLn(f, schoolboys[i].Assessment, ' ');
+    end;
+  end;
+  // закрываем файл
+  CloseFile(f);
+end;
+
+end.
+ 

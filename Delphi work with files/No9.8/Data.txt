@@ -1,0 +1,4 @@
+No1
+ln:10
+cl:red
+mt:metall
